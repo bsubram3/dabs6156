@@ -24,10 +24,12 @@ if departing_station and departing_station != 'Select' and arrival_station and a
     st.write('Departing station:', departing_station)
     st.write('Arriving station:', arrival_station)
 
-if selected_date and selected_time:
-    st.write("Date Time:", selected_date , selected_time)
-    weekday_num = selected_date.weekday()  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
-    weekday_name = selected_date.strftime("%A")  # Full weekday name
-    month_name = selected_date.strftime("%b")
-    st.write('Weekday:', weekday_name, ' Month:', month_name)
+    if selected_date and selected_time:
+        st.write("Date Time:", selected_date , selected_time)
+        weekday_num = selected_date.weekday()  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+        weekday_name = selected_date.strftime("%A")  # Full weekday name
+        month_name = selected_date.strftime("%b")
+        st.write('Weekday:', weekday_name, ' Month:', month_name)
+
+        st.header('Estimated delay in arrival: 20 mins')
 
