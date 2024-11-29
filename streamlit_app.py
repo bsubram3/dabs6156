@@ -3,7 +3,7 @@ import datetime
 import joblib
 import pandas as pd
 
-st.title('NYC Subway')
+st.title('NYC Subway Arrival Prediction')
 departing_station = st.selectbox('Departing station', ('Select', 'NY Penn Station', 'Grand Central', 'Jamaica',
                                                        'Long Island City', 'Hunterspoint Ave', 'Mets-Willets Point',
                                                        'Queens Village', 'Flushing Main St', 'Woodside',
@@ -27,34 +27,41 @@ selected_date = st.date_input("Date", value=datetime.date.today())
 selected_time = st.time_input("Time", value=None)
 
 run_model = False
+debug = False
+
+if len(st.query_params) > 0 and st.query_params["debug"] == "true":
+    debug = True
 
 if departing_station and departing_station != 'Select' and arrival_station and arrival_station != 'Select':
-    st.write('Departing station:', departing_station)
-    st.write('Arriving station:', arrival_station)
+    if debug:
+        st.write('Departing station:', departing_station)
+        st.write('Arriving station:', arrival_station)
 
     if selected_date and selected_time:
-        st.write("Date Time:", selected_date, selected_time)
-        weekday_num = selected_date.weekday()  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
-        weekday_name = selected_date.strftime("%A")  # Full weekday name
-        month_name = selected_date.strftime("%b")
-        st.write('Weekday:', weekday_name, ' Month:', month_name)
         run_model = True
+        if debug:
+            st.write("Date Time:", selected_date, selected_time)
+            weekday_num = selected_date.weekday()  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+            weekday_name = selected_date.strftime("%A")  # Full weekday name
+            month_name = selected_date.strftime("%b")
+            st.write('Weekday:', weekday_name, ' Month:', month_name)
+
 
 if run_model:
     df_incidents = pd.read_csv('df_agg_incidents.csv')
     # Load the pipeline
     pipeline = joblib.load('xgb_pipeline_new.pkl')
 
-    depart_station = 'Atlantic Terminal'
-    arrive_station = 'Jamaica'
-    date_str = "2010-01-02"
-    time_str = "09:30"
+    depart_station = departing_station
+    arrive_station = arrival_station
+    date_str = selected_date
+    time_str = selected_time
 
     date_obj = pd.to_datetime(date_str, format='%Y-%m-%d')
     month = date_obj.month
     day = date_obj.day
 
-    time = pd.to_datetime(time_str, format='%H:%M')
+    time = pd.to_datetime(time_str, format='%H:%M:%S')
     if (time.hour == 7 and time.minute >= 15) or (time.hour == 8 or time.hour == 9):
         peak_period = "AM-Peak"
     else:
@@ -80,21 +87,21 @@ if run_model:
     }
 
     user_input = {
-        'PRCP': df_incidents_filter['PRCP'][1],
-        'SNOW': df_incidents_filter['SNOW'][1],
-        'SNWD': df_incidents_filter['SNWD'][1],
-        'TMIN': df_incidents_filter['TMIN'][1],
-        'TMAX': df_incidents_filter['TMAX'][1],
-        'Crash Count': df_incidents_filter['Crash Count'][1],
-        'SHOOTING_INCIDENT_COUNT': df_incidents_filter['SHOOTING_INCIDENT_COUNT'][1],
-        'FIRE_INCIDENT_COUNT': df_incidents_filter['FIRE_INCIDENT_COUNT'][1],
-        'EVRNT_COUNT': df_incidents_filter['EVRNT_COUNT'][1],
-        'DayOfWeek': df_incidents_filter['DayOfWeek'][1],
-        'IsWeekend': df_incidents_filter['IsWeekend'][1],
-        'Minutes Late Lag1': df_incidents_filter['Minutes Late Lag1'][1],
-        'Minutes Late Lag7': df_incidents_filter['Minutes Late Lag7'][1],
-        'Minutes Late Lag14': df_incidents_filter['Minutes Late Lag14'][1],
-        'Delay Category': df_incidents_filter['Delay Category'][1],
+        'PRCP': df_incidents_filter['PRCP'].iloc[0],
+        'SNOW': df_incidents_filter['SNOW'].iloc[0],
+        'SNWD': df_incidents_filter['SNWD'].iloc[0],
+        'TMIN': df_incidents_filter['TMIN'].iloc[0],
+        'TMAX': df_incidents_filter['TMAX'].iloc[0],
+        'Crash Count': df_incidents_filter['Crash Count'].iloc[0],
+        'SHOOTING_INCIDENT_COUNT': df_incidents_filter['SHOOTING_INCIDENT_COUNT'].iloc[0],
+        'FIRE_INCIDENT_COUNT': df_incidents_filter['FIRE_INCIDENT_COUNT'].iloc[0],
+        'EVRNT_COUNT': df_incidents_filter['EVRNT_COUNT'].iloc[0],
+        'DayOfWeek': df_incidents_filter['DayOfWeek'].iloc[0],
+        'IsWeekend': df_incidents_filter['IsWeekend'].iloc[0],
+        'Minutes Late Lag1': df_incidents_filter['Minutes Late Lag1'].iloc[0],
+        'Minutes Late Lag7': df_incidents_filter['Minutes Late Lag7'].iloc[0],
+        'Minutes Late Lag14': df_incidents_filter['Minutes Late Lag14'].iloc[0],
+        'Delay Category': df_incidents_filter['Delay Category'].iloc[0],
         'Period': peak_period,
         'Branch': depart_station,
         'Depart Station': depart_station,
@@ -113,8 +120,12 @@ if run_model:
 
     # Convert user input to DataFrame
     input_df = pd.DataFrame([user_input])
-    st.write(input_df)
+    if debug:
+        st.write(input_df)
     # Make prediction
     y_pred = pipeline.predict(input_df)
-
-    st.header(f'Predicted Minutes Late: {y_pred[0]}')
+    predicted_value = round(y_pred[0], 2)
+    if predicted_value > 0:
+        st.subheader(f'{depart_station} to {arrive_station} might be :red[{predicted_value:.0f} minutes late]')
+    else:
+        st.subheader(f'{depart_station} to {arrive_station} might be :green[{predicted_value:.0f} minutes early]')
