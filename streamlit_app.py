@@ -91,11 +91,11 @@ if run_model:
         'EVRNT_COUNT': df_incidents_filter['EVRNT_COUNT'][1],
         'DayOfWeek': df_incidents_filter['DayOfWeek'][1],
         'IsWeekend': df_incidents_filter['IsWeekend'][1],
-        'Minutes Late Lag1': df_incidents_filter['Minutes Late Lag1'][1], 
+        'Minutes Late Lag1': df_incidents_filter['Minutes Late Lag1'][1],
         'Minutes Late Lag7': df_incidents_filter['Minutes Late Lag7'][1],
         'Minutes Late Lag14': df_incidents_filter['Minutes Late Lag14'][1],
         'Delay Category': df_incidents_filter['Delay Category'][1],
-        'Period': peak_period, 
+        'Period': peak_period,
         'Branch': depart_station,
         'Depart Station': depart_station,
         'Arrive Station': arrive_station,
@@ -116,4 +116,5 @@ if run_model:
     st.write(input_df)
     # Make prediction
     y_pred = pipeline.predict(input_df)
-    st.write(y_pred)
+
+    st.header(f'Predicted Minutes Late: {y_pred[0]}')
