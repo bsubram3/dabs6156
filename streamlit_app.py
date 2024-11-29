@@ -114,3 +114,6 @@ if run_model:
     # Convert user input to DataFrame
     input_df = pd.DataFrame([user_input])
     st.write(input_df)
+    # Make prediction
+    y_pred = pipeline.predict(input_df)
+    st.write(y_pred)
